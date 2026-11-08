@@ -1,0 +1,87 @@
+# Build the Minecraft PE 0.6.1 Android debug APK without Gradle.
+#
+# Why no Gradle: the Gradle wrapper download from services.gradle.org
+# times out from the GitHub runner (proven 3x on this VM's sibling
+# project), and this project needs NDK r17c (stlport_static, removed
+# after r17c) which modern AGP cannot use anyway. The build uses the
+# direct pipeline in handheld/project/android/build-apk.sh
+# (ndk-build + aapt2/javac/d8/zipalign/apksigner).
+#
+# Triggered on Android-related pushes and manually. Produces a debug
+# APK signed with a fresh debug keystore each run (uninstall any
+# previous build before installing).
+
+name: Android
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'handheld/project/android/**'
+      - 'handheld/project/lib_projects/raknet/**'
+      - 'handheld/src/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'handheld/project/android/**'
+      - 'handheld/project/lib_projects/raknet/**'
+      - 'handheld/src/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Install Android build-tools 36.0.0 + platform android-35
+      run: |
+        echo "ANDROID_HOME=$ANDROID_HOME"
+        ls "$ANDROID_HOME/build-tools" || true
+        yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+        "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+          "build-tools;36.0.0" "platforms;android-35"
+
+    - name: Download NDK r17c (stlport)
+      run: |
+        cd "$RUNNER_TEMP"
+        curl -sL -o android-ndk-r17c-linux-x86_64.zip \
+          https://dl.google.com/android/repository/android-ndk-r17c-linux-x86_64.zip
+        ls -la android-ndk-r17c-linux-x86_64.zip
+        unzip -q android-ndk-r17c-linux-x86_64.zip
+        ls "$RUNNER_TEMP/android-ndk-r17c/ndk-build"
+
+    - name: Build debug APK (build-apk.sh)
+      working-directory: handheld/project/android
+      env:
+        NDK_R17C: ${{ runner.temp }}/android-ndk-r17c
+      run: |
+        bash build-apk.sh out/minecraft-mcpe-0.6.1-debug.apk
+
+    - name: Verify APK
+      working-directory: handheld/project/android
+      run: |
+        BT="$ANDROID_HOME/build-tools/36.0.0"
+        "$BT/aapt2" dump badging out/minecraft-mcpe-0.6.1-debug.apk | head -8
+        unzip -t out/minecraft-mcpe-0.6.1-debug.apk | tail -1
+        "$BT/apksigner" verify -v out/minecraft-mcpe-0.6.1-debug.apk | grep -E "Verified using|Number of signers"
+        sha256sum out/minecraft-mcpe-0.6.1-debug.apk
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: minecraft-mcpe-0.6.1-android-debug
+        path: handheld/project/android/out/minecraft-mcpe-0.6.1-debug.apk
+        if-no-files-found: error

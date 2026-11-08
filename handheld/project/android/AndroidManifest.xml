@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.mojang.minecraftpe"
-      android:versionCode="6006"
-      android:versionName="0.6.0"
+      android:versionCode="1"
+      android:versionName="0.6.1"
       android:installLocation="preferExternal">
 
     <!-- This is the platform API where NativeActivity was introduced. -->
-    <uses-sdk   android:minSdkVersion="9"
-                android:targetSdkVersion="9" />
+    <!-- NOTE: minSdk raised 9 -> 21: the native lib is built against
+         NDK platform android-21 (arm64-v8a requires API 21+), and
+         targetSdk 30 is what build.gradle declares. aapt2 link flags
+         do NOT override manifest values, so they must be set here. -->
+    <uses-sdk   android:minSdkVersion="21"
+                android:targetSdkVersion="30" />
                 
     <!-- uses-feature android:name="android.hardware.touchscreen.multitouch" android:required="true"/ -->
 
@@ -26,6 +30,7 @@
                     android:configChanges="orientation|keyboardHidden"
                     android:screenOrientation="landscape"
                     android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                    android:exported="true"
                     android:launchMode="singleTop">
 
             <meta-data  android:name="android.app.lib_name"

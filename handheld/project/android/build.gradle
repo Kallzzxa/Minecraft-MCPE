@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId "com.custom.minecraftpe"
-        minSdkVersion 9
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
         versionName "0.6.1"

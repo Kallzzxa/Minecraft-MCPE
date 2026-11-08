@@ -249,7 +249,11 @@ LOCAL_SRC_FILES := ../../../src/main.cpp \
 ../../../src/world/phys/HitResult.cpp
 
 LOCAL_CFLAGS := -Wno-psabi $(LOCAL_CFLAGS)
-LOCAL_CFLAGS += -isystem $(SYSROOT)/usr/include
+# NOTE: the old "-isystem $(SYSROOT)/usr/include" line was removed:
+# with NDK r17c SYSROOT no longer expands to the platform sysroot,
+# so it pulled in the HOST /usr/include and broke the build
+# (bits/libc-header-start.h not found). The NDK already passes the
+# correct --sysroot include paths by default.
 
 #LOCAL_CFLAGS := -DANDROID_PUBLISH -DDEMO_MODE $(LOCAL_CFLAGS)
 #LOCAL_CFLAGS := -DANDROID_PUBLISH $(LOCAL_CFLAGS)
