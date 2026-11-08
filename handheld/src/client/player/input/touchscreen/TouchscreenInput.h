@@ -39,6 +39,7 @@ public:
     void releaseAllKeys();
 
 	const RectangleArea& getRectangleArea();
+	const RectangleArea& getJumpRightRectangleArea();
     const RectangleArea& getPauseRectangleArea();
 
 private:
@@ -63,6 +64,7 @@ private:
 	RectangleArea* aPause;
 	//RectangleArea* aUpJump;
 	RectangleArea* aJump;
+	RectangleArea* aJumpRight;
 	RectangleArea* aUpLeft;
 	RectangleArea* aUpRight;
 	bool _pauseIsDown;

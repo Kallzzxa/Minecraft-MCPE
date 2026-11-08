@@ -61,7 +61,7 @@ echo "== 2. compile resources (aapt2) =="
 
 echo "== 3. link manifest + resources + assets =="
 "$AAPT2" link --min-sdk-version 21 --target-sdk-version 30 \
-    --version-code 1 --version-name "0.6.1" \
+    --version-code 2 --version-name "0.6.1" \
     --auto-add-overlay \
     -I "$ANDROID_JAR" \
     --manifest AndroidManifest.xml \

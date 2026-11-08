@@ -17,6 +17,7 @@ static const int AREA_DPAD_W = 102;
 static const int AREA_DPAD_E = 103;
 static const int AREA_DPAD_C = 104;
 static const int AREA_PAUSE = 105;
+static const int AREA_JUMP_RIGHT = 106;
 
 static int cPressed = 0;
 static int cReleased = 0;
@@ -74,6 +75,7 @@ TouchscreenInput_TestFps::TouchscreenInput_TestFps( Minecraft* mc, Options* opti
 	aUp(0),
 	aDown(0),
 	aJump(0),
+	aJumpRight(0),
 	aUpLeft(0),
 	aUpRight(0),
 	_allowHeightChange(false)
@@ -181,6 +183,12 @@ void TouchscreenInput_TestFps::onConfigChanged(const Config& c) {
 	xx = BaseX + 2 * Bw; yy = BaseY + Bh;
 	_model.addArea(AREA_DPAD_E, aRight = new RectangleArea(xx, yy, xx+Bw, yy+Bh));
 
+	// Jump button on the right side (like newer MCPE); mirrored for
+	// left-handed players (D-pad moves right, jump button moves left).
+	xx = _options->isLeftHanded ? 8.0f : w - 8.0f - Bw;
+	yy = BaseY + Bh;
+	_model.addArea(AREA_JUMP_RIGHT, aJumpRight = new RectangleArea(xx, yy, xx+Bw, yy+Bh));
+
 #if defined(__APPLE__) || defined(_UWP)
 #ifdef _UWP
     float maxPauseMm = 18.0f;
@@ -245,7 +253,7 @@ void TouchscreenInput_TestFps::tick( Player* player )
 	bool tmpForward = false;
 	bool tmpNorthJump = false;
 
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 7; ++i)
 		_buttons[i] = false;
 
 	const int* pointerIds;
@@ -279,20 +287,20 @@ void TouchscreenInput_TestFps::tick( Player* player )
 			if (isFirstPress) _wasPressed[buttonIndex] = true;
 		}
 
-		if (areaId == AREA_DPAD_C && isFirstPress) {
+		if ((areaId == AREA_DPAD_C || areaId == AREA_JUMP_RIGHT) && isFirstPress) {
 			_allowHeightChange = true;
 		}
 
-		if (areaId == AREA_DPAD_C && Multitouch::isPointerDown(p) && _pressedJump) {
+		if ((areaId == AREA_DPAD_C || areaId == AREA_JUMP_RIGHT) && Multitouch::isPointerDown(p) && _pressedJump) {
 			_allowHeightChange = true;
 		}
 		#else
 
 		if (Multitouch::isPressed(p))
-            _allowHeightChange = (areaId == AREA_DPAD_C);
+            _allowHeightChange = (areaId == AREA_DPAD_C || areaId == AREA_JUMP_RIGHT);
 		#endif
 
-        if (areaId == AREA_DPAD_C)
+        if (areaId == AREA_DPAD_C || areaId == AREA_JUMP_RIGHT)
 		{
 			setButton = true;
 			heldJump = true;
@@ -476,6 +484,10 @@ const RectangleArea& TouchscreenInput_TestFps::getRectangleArea()
 {
 	return _boundingRectangle;
 }
+const RectangleArea& TouchscreenInput_TestFps::getJumpRightRectangleArea()
+{
+	return *aJumpRight;
+}
 const RectangleArea& TouchscreenInput_TestFps::getPauseRectangleArea()
 {
     return *aPause;
@@ -552,6 +564,18 @@ void TouchscreenInput_TestFps::rebuild() {
 	else
 	{
 		drawRectangleArea(t, aJump, imageU + imageSize * 4, imageV, (float)imageSize);
+	}
+
+	// render jump button (right side, same icon as the center jump)
+	if (isButtonDown(AREA_JUMP_RIGHT)) t.colorABGR(cPressed);
+	else						     t.colorABGR(cReleased);
+	if (_renderFlightImage)
+	{
+		drawRectangleArea(t, aJumpRight, imageU + imageSize * 4, imageV + imageSize, (float)imageSize);
+	}
+	else
+	{
+		drawRectangleArea(t, aJumpRight, imageU + imageSize * 4, imageV, (float)imageSize);
 	}
 	
 

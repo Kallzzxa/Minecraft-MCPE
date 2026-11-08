@@ -71,6 +71,7 @@ public:
 		joyTouchArea(-1, -1, 0, 0),
 		inventoryArea(-1,-1, 0, 0),
 		pauseArea(-1, -1, 0, 0),
+		jumpArea(-1, -1, 0, 0),
 		_buildMovement(0),
 		_sentFirstRemove(false),
 		_canDestroy(false),
@@ -123,12 +124,21 @@ public:
             pauseArea._y0 -= border;
             pauseArea._y1 += border;
 
+			// Keep the right-side jump button out of the turn/build
+			// area too, or tapping it would also turn the camera
+			// and break/place blocks.
+			jumpArea._x0 -= border;
+			jumpArea._x1 += border;
+			jumpArea._y0 -= border;
+			jumpArea._y1 += border;
+
 			//LOGI("move: %f, %f, %f, %f\n", moveArea._x0, moveArea._y0, moveArea._x1, moveArea._y1);
 
 			_area.clear();
 			_area.include(&screenArea);
 			_area.exclude(&moveArea);
 			_area.exclude(&inventoryArea);
+			_area.exclude(&jumpArea);
 #if defined(__APPLE__) || defined(_UWP)
             _area.exclude(&pauseArea);
 #endif /*__APPLE__ || _UWP*/
@@ -362,6 +372,7 @@ public:
 	RectangleArea joyTouchArea;
 	RectangleArea inventoryArea;
     RectangleArea pauseArea;
+	RectangleArea jumpArea;
 
 private:
 	IInputHolder* _holder;
@@ -426,6 +437,7 @@ public:
 	virtual void onConfigChanged(const Config& c) {
 		_move.onConfigChanged(c);
 		_turnBuild.moveArea = _move.getRectangleArea();
+		_turnBuild.jumpArea = _move.getJumpRightRectangleArea();
 #if defined(__APPLE__) || defined(_UWP)
 		_turnBuild.pauseArea = _move.getPauseRectangleArea();
 #endif
